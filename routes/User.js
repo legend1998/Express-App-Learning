@@ -20,8 +20,7 @@ router.route("/create").post((req, res) => {
   let refcode = crypto.randomBytes(16).toString("base64");
 
   UserModel.create({
-    fname: req.body.fname,
-    lname: req.body.lname,
+    name: req.body.name,
     refCode: refcode,
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 10),
