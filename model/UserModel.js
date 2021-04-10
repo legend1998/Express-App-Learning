@@ -16,14 +16,14 @@ const UserSchema = new mongoose.Schema({
   refBy: { type: String, default: "" },
   refCode: { type: String, unique: true },
   Address: { type: Object },
-  aadhar: { type: Number, unique: true, minlength: 12, maxlength: 12 },
+  aadhar: { type: String, unique: true, minlength: 12, maxlength: 12 },
   multiple: { type: Number, default: 1 },
   wallet: {
-    balance: { type: Number, Default: 0 },
-    ROI: { type: Number, Default: 1.7 },
+    balance: { type: Number, Default: 0, min: 0 },
+    ROI: { type: Number, default: 1.7 },
   },
   principle: {
-    balance: { type: Number, default: 0 },
+    balance: { type: Number, default: 0, min: [0, "this is minimum value"] },
     freeze: { type: Boolean, default: false },
     cycle: { type: Number, default: 7 },
   },

@@ -1,6 +1,6 @@
-import UserModel from "../model/UserModel";
+import UserModel from "../model/UserModel.js";
 
-function calculateLevelIncome(refby, amount, level = 1) {
+export default function calculateLevelIncome(refby, amount, level = 1) {
   if (refby === "") return;
   if (level == 20) return;
 
@@ -8,12 +8,14 @@ function calculateLevelIncome(refby, amount, level = 1) {
 
   const deposit = level < 6 ? amount * weight[level] : amount * 0.001;
 
+  console.log(refby, amount, level, deposit);
+
   UserModel.findOneAndUpdate(
     { refCode: refby },
     { $inc: { "wallet.balance": deposit } }
   )
     .then((user) => {
-      calculateLevelIncome(user.refBy, amount, level++);
+      calculateLevelIncome(user.refBy, amount, ++level);
     })
     .catch((e) => {
       var a = localStorage.getItem("failLevelincomeLogs");

@@ -1,0 +1,65 @@
+###
+GET http://localhost:8000/user/getall
+Authorization: ut29sbk2039@eiup$
+Content-Type: application/json
+
+{
+    "name":"tinku kumar",
+    "email":"tinku@gmail.com",
+    "phone":"9866573210",
+    "aadhar":"123450324530",
+    "password":"tinku2000"
+}
+###
+###
+POST http://localhost:8000/user/create
+Authorization: ut29sbk2039@eiup$
+Content-Type: application/json
+
+{
+    "name":"jiya kumar",
+    "email":"jiya@gmail.com",
+    "phone":"0394750335",
+    "aadhar":"123250324530",
+    "password":"jiya2000"
+}
+###
+
+###
+DELETE  http://localhost:8080/user/deleteuser/606eb030b960da421dec0298
+Authorization: ut29sbk2039@eiup$
+
+###
+POST http://localhost:8000/user/withdraw
+Authorization: ut29sbk2039@eiup$
+Content-Type: application/json
+
+{
+    "wallet":100,
+    "amount":500,
+    "principle":0,
+    "uid":"606fc3f4d5684e4a8408c262"
+    
+}
+
+###
+POST http://localhost:8080/user/signin
+Authorization: ut29sbk2039@eiup$
+Content-Type: application/json
+
+{
+    "name":"suman kumar",
+    "email":"sumankuma.1997@gmail.com",
+    "password":"suman1998"
+}
+###
+POST http://localhost:8080/user/addrefcode
+Authorization: ut29sbk2039@eiup$
+Content-Type: application/json
+
+{
+    "uid":"606fc3f4d5684e4a8408c262",
+    "refcode":"7v6UpZOUJC+uWKya+e6wOw=="
+}
+
+

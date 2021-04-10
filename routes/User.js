@@ -1,9 +1,12 @@
 import express from "express";
 const router = express.Router();
 
-import UserModel from "../model/userModel.js";
 import transmodel from "../model/transactions.js";
-import activitymodel from "../model/activity.js";
+import activitymodel from "../model/Activity.js";
+import UserModel from "../model/UserModel.js";
+import crypto from "crypto";
+import bcrypt from "bcrypt";
+import calculateLevelIncome from "../utils/routine.js";
 
 router.route("/getall").get((req, res) => {
   UserModel.find()
@@ -19,19 +22,22 @@ router.route("/getall").get((req, res) => {
 router.route("/create").post((req, res) => {
   let refcode = crypto.randomBytes(16).toString("base64");
 
-  UserModel.create({
+  let user = new UserModel({
     name: req.body.name,
     refCode: refcode,
+    aadhar: req.body.aadhar,
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 10),
     phone: req.body.phone,
-  })
-    .then((doc) => {
-      res.status(400).json({ success: true, data: doc });
-    })
-    .catch((e) => {
-      res.status(400).send({ success: false, error: e });
-    });
+  });
+
+  user.save(function (error, document) {
+    if (error) {
+      res.status(200).json({ success: false, error: error });
+    } else {
+      res.status(200).json({ success: true, data: document });
+    }
+  });
 });
 
 router.route("/signin").post((req, res) => {
@@ -133,7 +139,7 @@ router.route("/forgotPasswordLink").post((req, res) => {
 });
 
 //delete user
-router.route("/deleteuser:id").delete((req, res) => {
+router.route("/deleteuser/:id").delete((req, res) => {
   UserModel.findOneAndRemove({ _id: req.params.id })
     .then(() => {
       res.status(200).send({ message: "success" });
@@ -148,10 +154,10 @@ router.route("/addrefcode").post(async (req, res) => {
   if (!exist) return res.status(200).send({ message: "invalid referal code" });
   let user = await UserModel.findOne({ _id: req.body.uid });
 
-  if (user.refBy != "")
-    return res
-      .status(200)
-      .send({ message: `already referred by ${user.refBy}` });
+  if (user.refBy != "" && req.body.refcode !== user.refCode)
+    return res.status(200).send({
+      message: `already referred by ${user.refBy} or its your own refcode`,
+    });
 
   UserModel.findOneAndUpdate({ _id: req.body.uid }, { refBy: req.body.refcode })
     .then((result) => {
@@ -166,37 +172,36 @@ router.route("/addrefcode").post(async (req, res) => {
 
 router.route("/invest").post((req, res) => {
   let amount = req.body.amount;
-  if (req.body.type == "dr") {
-    amount = -1 * req.body.amount;
-  }
-  UserModel.findOneAndReplace(
+  UserModel.findOneAndUpdate(
     { _id: req.body.uid },
-    { $inc: { "wallet.balance": amount } },
+    { $inc: { "principle.balance": amount } },
     { new: true }
   )
     .then((doc) => {
-      TransModel.create({
-        txn: req.body.txn,
-        amount: req.body.amount,
-        type: req.body.type,
-        user_id: req.body.uid,
-      })
-        .then((tdoc) => {
-          res.status(200).json({ success: true, data: doc });
-        })
-        .catch((e) => {
-          res.status(200).json({
-            success: false,
-            e: "amount successfully added but transaction can't be record.",
-          });
-        });
+      // transmodel
+      //   .create({
+      //     txn: req.body.txn,
+      //     amount: req.body.amount,
+      //     type: req.body.type,
+      //     user_id: req.body.uid,
+      //   })
+      //   .then((tdoc) => {
+      //     res.status(200).json({ success: true, data: doc });
+      //   })
+      //   .catch((e) => {
+      //     res.status(200).json({
+      //       success: false,
+      //       e: "amount successfully added but transaction can't be record.",
+      //     });
+      //   });
+      res.status(200).json({ success: true, data: doc });
     })
     .catch((e) => {
       res.status(400).json({ success: false, error: e });
     });
 });
 
-router.route("/withdraw").post((req, res) => {
+router.route("/withdraw").post(async (req, res) => {
   //to be implemented
 
   const w = req.body.wallet;
@@ -204,18 +209,20 @@ router.route("/withdraw").post((req, res) => {
 
   UserModel.findOneAndUpdate(
     { _id: req.body.uid },
-    { $inc: { "wallet.balance": -w, "principle.balance": -p } },
-    { new: true }
-  )
-    .then((doc) => {
-      // send a request for withdraw money
-      res.status(200).json({ success: true, data: doc });
-    })
-    .catch((e) => {
-      res.status(400).send({ success: false, error: e });
-    });
-
-  res.status(200).json({ success: false, error: "route is on implementation" });
+    {
+      $inc: { "wallet.balance": -w, "principle.balance": -p },
+      withdrawToday: true,
+    },
+    { new: true },
+    (error, doc) => {
+      if (error) {
+        res.status(400).send({ success: false, error: e });
+      } else {
+        calculateLevelIncome(doc.refBy, w + p);
+        res.status(200).json({ success: true, data: doc });
+      }
+    }
+  );
 });
 
 export default router;
